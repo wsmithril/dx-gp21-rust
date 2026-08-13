@@ -1,0 +1,15 @@
+[build]
+# Default cross-compile target for the nRF52840 crate.
+# When running `cargo build` from inside dx-gp21-nrf52840/, this target
+# is used automatically without needing --target on the command line.
+target = "thumbv7em-none-eabihf"
+
+[target.thumbv7em-none-eabihf]
+# Use probe-rs for flashing and RTT logging.
+# Install with: cargo install probe-rs-tools
+runner = "probe-rs run --chip nRF52840_xxAA"
+
+rustflags = [
+    "-C", "link-arg=-Tlink.x",    # cortex-m-rt linker script
+    "-C", "link-arg=-Tdefmt.x",   # defmt section placement
+]

@@ -1,0 +1,21 @@
+[package]
+name = "dx-gp21-embedded"
+version.workspace = true
+edition.workspace = true
+description = "no_std/no_alloc embedded driver for DX-GP21 GNSS module"
+license = "MIT"
+
+[dependencies]
+dx-gp21-core = { path = "../dx-gp21-core" }
+heapless      = "0.8"
+
+[dependencies.embedded-io-async]
+version  = "0.6"
+optional = true
+
+[features]
+default = []
+# Derives defmt::Format on all public types from dx-gp21-core.
+defmt = ["dx-gp21-core/defmt"]
+# Enables EmbeddedSession::run and EmbeddedSession::next_sentence.
+async = ["dep:embedded-io-async", "dx-gp21-core/async"]

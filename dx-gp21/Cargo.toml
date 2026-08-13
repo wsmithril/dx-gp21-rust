@@ -1,0 +1,11 @@
+[package]
+name = "dx-gp21"
+version.workspace = true
+edition.workspace = true
+description = "std host driver for DX-GP21 GNSS module (serialport + GnssState)"
+license = "MIT"
+
+[dependencies]
+dx-gp21-core = { path = "../dx-gp21-core" }
+serialport = "4"
+thiserror = "2"

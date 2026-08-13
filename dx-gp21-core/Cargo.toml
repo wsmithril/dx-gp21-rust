@@ -1,0 +1,22 @@
+[package]
+name = "dx-gp21-core"
+version.workspace = true
+edition.workspace = true
+description = "no_std NMEA parser and command builder for DX-GP21 GNSS module"
+license = "MIT"
+
+[dependencies]
+
+[dev-dependencies]
+
+[dependencies.defmt]
+version  = "0.3"
+optional = true
+
+[features]
+default = []
+# Derives defmt::Format on all public types for use with defmt logging.
+defmt = ["dep:defmt"]
+# Enables AsyncLineReader trait and run_with_reader.
+# No IO dependency — platforms provide the impl via their own HAL.
+async = []

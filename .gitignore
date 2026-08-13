@@ -1,0 +1,17 @@
+# Rust build output
+/target/
+
+# Cargo lock (keep for binaries, omit for libraries — we have both, keep it)
+# Cargo.lock
+
+# Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Sample / captured NMEA logs
+sample-input.txt
+*.nmea
+*.log

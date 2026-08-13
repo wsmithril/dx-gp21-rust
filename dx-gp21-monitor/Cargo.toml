@@ -1,0 +1,18 @@
+[package]
+name = "dx-gp21-monitor"
+version.workspace = true
+edition.workspace = true
+description = "Terminal UI monitor for the DX-GP21 GNSS module"
+
+[[bin]]
+name = "dx-gp21-monitor"
+path = "src/main.rs"
+
+[dependencies]
+dx-gp21      = { path = "../dx-gp21" }
+dx-gp21-core = { path = "../dx-gp21-core" }
+ratatui      = "0.29"
+crossterm    = { version = "0.28", features = ["event-stream"] }
+clap         = { version = "4", features = ["derive"] }
+tokio        = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+futures-util = "0.3"

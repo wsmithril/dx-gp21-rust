@@ -1,0 +1,4 @@
+[toolchain]
+# Minimum version required for the fixed crate (indirect dep of nrf52840-hal).
+# Upgrade this if a dependency raises the MSRV.
+channel = "1.93.0"

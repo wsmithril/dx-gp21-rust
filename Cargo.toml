@@ -1,0 +1,26 @@
+[workspace]
+members = [
+    "dx-gp21-core",
+    "dx-gp21-embedded",
+    "dx-gp21",
+    "dx-gp21-monitor",
+    "dx-gp21-nrf52840",
+]
+# `cargo build` and `cargo test` target host crates only.
+# Do NOT use `cargo build --workspace` — it ignores default-members and tries
+# to compile the nRF52840 crate for the host target, which fails.
+#
+# For host:    cargo build
+# For nRF52840: cd dx-gp21-nrf52840 && cargo build   ← uses .cargo/config.toml
+default-members = [
+    "dx-gp21-core",
+    "dx-gp21-embedded",
+    "dx-gp21",
+    "dx-gp21-monitor",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["DX-GP21 Monitor"]
