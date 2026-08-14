@@ -250,7 +250,7 @@ impl core::fmt::Display for ConstellationMask {
     }
 }
 
-/// Raw `u8` constants kept for low-level / FFI use. Prefer [`ConstellationMask`].
+/// Raw `u8` constants for low-level / FFI use. Prefer [`ConstellationMask`].
 pub mod systems {
     pub const GPS:     u8 = 0x01;
     pub const BDS:     u8 = 0x02;

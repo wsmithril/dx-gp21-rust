@@ -14,4 +14,4 @@ pub use file_session::FileSession;
 pub use host_state::GnssState;
 pub use serial::{SerialSession, SessionError};
 pub use sentence_reader::{SentenceLine, SentenceReader};
-pub use session::GnssSession;
+pub use session::{GnssSession, SeekableSession};

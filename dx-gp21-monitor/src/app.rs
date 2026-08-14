@@ -196,12 +196,20 @@ pub struct LogEntry {
     pub valid: bool,
 }
 
+/// Preset replay speed multipliers (applied to the initial `--delay` value).
+pub const SPEEDS: &[f64] = &[0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 100.0];
+
 pub struct App<S: GnssSession> {
     pub session: S,
     pub port_name: String,
     pub log: VecDeque<LogEntry>,
     pub log_paused: bool,
     pending_sentences: Vec<SentenceLine>,
+
+    /// Base delay from `--delay` arg; speed multiplier scales from this.
+    replay_base_delay_ms: u64,
+    /// Index into [`SPEEDS`]; default 1x.
+    pub replay_speed_idx: usize,
 
     pub cmd_input: String,
     /// The text the user actually typed — fixed while Tab cycles completions.
@@ -223,11 +231,16 @@ pub struct App<S: GnssSession> {
 
 impl<S: GnssSession> App<S> {
     pub fn new(session: S, port_name: String) -> Self {
+        let base = session.as_seekable().map(|s| s.get_replay_delay_ms()).unwrap_or(20);
+        // Default index: find 1x in SPEEDS, or the closest >= 1x
+        let default_idx = SPEEDS.iter().position(|&s| s == 1.0).unwrap_or(2);
         Self {
             session, port_name,
             log: VecDeque::with_capacity(MAX_LOG),
             log_paused: false,
             pending_sentences: Vec::new(),
+            replay_base_delay_ms: base,
+            replay_speed_idx: default_idx,
             cmd_input: String::new(),
             cmd_search: String::new(),
             cmd_history: VecDeque::with_capacity(MAX_HISTORY),
@@ -239,6 +252,19 @@ impl<S: GnssSession> App<S> {
             show_help: false,
             confirm_restart: None,
             status_msg: None,
+        }
+    }
+
+    /// Current speed as a display string, e.g. `"2x"` or `"0.25x"`.
+    pub fn replay_speed_label(&self) -> String {
+        let s = SPEEDS[self.replay_speed_idx];
+        if s < 1.0 { format!("{:.2}x", s) } else { format!("{}x", s as u32) }
+    }
+
+    fn apply_replay_speed(&self) {
+        if let Some(s) = self.session.as_seekable() {
+            let delay = (self.replay_base_delay_ms as f64 / SPEEDS[self.replay_speed_idx]) as u64;
+            s.set_replay_delay_ms(delay);
         }
     }
 
@@ -270,7 +296,6 @@ impl<S: GnssSession> App<S> {
         }
         match key.code {
             KeyCode::F(1) => { self.show_help = !self.show_help; return false; }
-            KeyCode::F(2) | KeyCode::F(5) => { self.log_paused = !self.log_paused; return false; }
             KeyCode::F(3) if !self.session.is_readonly() => { let _ = self.session.save_config(); return false; }
             KeyCode::F(4) if !self.session.is_readonly() => {
                 self.confirm_restart = Some(RestartMode::Cold); return false;
@@ -284,6 +309,51 @@ impl<S: GnssSession> App<S> {
             }
             KeyCode::PageUp   => { self.sat_scroll = self.sat_scroll.saturating_sub(5); return false; }
             KeyCode::PageDown => { self.sat_scroll += 5; return false; }
+            // File replay controls (only in file playback mode)
+            // ── File replay controls (only when session is seekable) ───────────
+            KeyCode::Char(' ') if self.session.seekable() => {
+                self.log_paused = !self.log_paused;
+                if let Some(s) = self.session.as_seekable() {
+                    s.set_paused(self.log_paused);
+                }
+                return false;
+            }
+            KeyCode::Left if self.session.seekable() => {
+                if let Some(s) = self.session.as_seekable() { s.seek(-1); }
+                return false;
+            }
+            KeyCode::Right if self.session.seekable() => {
+                if let Some(s) = self.session.as_seekable() { s.seek(1); }
+                return false;
+            }
+            // Step ±1 cycle and freeze — background thread processes the seek
+            // before stopping, so the TUI shows state at the new position.
+            KeyCode::Char('<') if self.session.seekable() => {
+                if let Some(s) = self.session.as_seekable() {
+                    s.step(-1);
+                    s.set_paused(true);
+                }
+                self.log_paused = true;
+                return false;
+            }
+            KeyCode::Char('>') if self.session.seekable() => {
+                if let Some(s) = self.session.as_seekable() {
+                    s.step(1);
+                    s.set_paused(true);
+                }
+                self.log_paused = true;
+                return false;
+            }
+            KeyCode::Char('-') if self.session.seekable() => {
+                self.replay_speed_idx = self.replay_speed_idx.saturating_sub(1);
+                self.apply_replay_speed();
+                return false;
+            }
+            KeyCode::Char('+') | KeyCode::Char('=') if self.session.seekable() => {
+                self.replay_speed_idx = (self.replay_speed_idx + 1).min(SPEEDS.len() - 1);
+                self.apply_replay_speed();
+                return false;
+            }
             _ => {}
         }
         if let Some(mode) = self.confirm_restart {

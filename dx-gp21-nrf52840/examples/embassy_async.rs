@@ -61,7 +61,7 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::task]
 async fn gnss_uart_task(
     mut rx: UarteRx<'static, peripherals::UARTE0>,
-    _tx: UarteTx<'static, peripherals::UARTE0>, // kept for sending $PCAS commands
+    _tx: UarteTx<'static, peripherals::UARTE0>, // for sending $PCAS commands
 ) {
     let mut dma_buf  = [0u8; 128];
     let mut line_buf = [0u8; 128];
