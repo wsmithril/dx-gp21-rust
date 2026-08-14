@@ -140,6 +140,16 @@ pub fn feed_sentence<S: GnssStore>(state: &mut S, line: &[u8]) -> Option<ParsedS
 /// The trait is deliberately narrow — it says nothing about HOW bytes arrive
 /// (DMA, interrupt-driven, async file I/O). That is the platform's concern.
 #[cfg(feature = "async")]
+// `async fn` in public trait: the compiler warns that the returned future's
+// auto-traits (Send/Sync) cannot be constrained, which matters for
+// multi-threaded async runtimes.  This trait targets single-threaded embedded
+// executors (Embassy, RTIC) where Send is irrelevant, so the lint is suppressed
+// here rather than at every impl site.
+//
+// `async_trait` (the proc-macro crate) is NOT used: it boxes the future
+// (Pin<Box<dyn Future>>) which requires heap allocation, incompatible with
+// this no_std / no_alloc crate.
+#[allow(async_fn_in_trait)]
 pub trait AsyncLineReader {
     type Error;
 

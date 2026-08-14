@@ -39,7 +39,7 @@ use embassy_nrf::{
 };
 
 use dx_gp21_core::state::GnssStore;
-use dx_gp21_core::{feed_sentence, types::*};
+use dx_gp21_core::feed_sentence;
 use dx_gp21_embedded::GnssState;
 
 // ── Caller-owned GNSS state ───────────────────────────────────────────────────
