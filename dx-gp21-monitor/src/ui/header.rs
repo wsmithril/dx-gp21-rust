@@ -47,6 +47,16 @@ pub fn render<S: GnssSession>(frame: &mut Frame, area: Rect, app: &App<S>) {
         Span::raw("")
     };
 
+    // Show replay speed indicator for seekable (file replay) sessions
+    let speed_span = if app.session.seekable() {
+        Span::styled(
+            format!("  ▶ {}", app.replay_speed_label()),
+            Style::default().fg(Color::Cyan).bg(Color::DarkGray),
+        )
+    } else {
+        Span::raw("")
+    };
+
     let line = Line::from(vec![
         Span::styled(
             " DX-GP21 GNSS ",
@@ -68,6 +78,7 @@ pub fn render<S: GnssSession>(frame: &mut Frame, area: Rect, app: &App<S>) {
         Span::styled(" UTC ", Style::default().fg(Color::Gray)),
         Span::styled(date_str, Style::default().fg(Color::Gray)),
         paused_span,
+        speed_span,
     ]);
 
     frame.render_widget(

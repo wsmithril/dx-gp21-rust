@@ -1,8 +1,7 @@
-use crate::types::*;
 use crate::nmea::{
-    ParsedSentence, GgaData, RmcData, GsaData, GsvData,
-    VtgData, ZdaData, GstData, DhvData,
+    DhvData, GgaData, GsaData, GstData, GsvData, ParsedSentence, RmcData, VtgData, ZdaData,
 };
+use crate::types::*;
 
 /// Trait implemented by both GnssStore (heapless) and GnssStore (Vec).
 pub trait GnssStore {
@@ -32,7 +31,9 @@ pub trait GnssStore {
     // ── Convenience defaults ──────────────────────────────────────────────────
 
     /// Returns `true` when a 2D or 3D fix is available.
-    fn has_fix(&self) -> bool { self.fix_mode() != FixMode::NoFix }
+    fn has_fix(&self) -> bool {
+        self.fix_mode() != FixMode::NoFix
+    }
 
     /// Returns `(latitude_deg, longitude_deg)` from the latest valid GGA sentence.
     fn position(&self) -> Option<(f64, f64)> {
@@ -45,21 +46,27 @@ pub trait GnssStore {
     }
 
     /// Returns ground speed in km/h from the latest VTG sentence.
-    fn speed_kmh(&self) -> Option<f32> { self.vtg().map(|v| v.speed_kmh) }
+    fn speed_kmh(&self) -> Option<f32> {
+        self.vtg().map(|v| v.speed_kmh)
+    }
 
     /// Returns true course over ground in degrees from the latest VTG sentence.
-    fn course_deg(&self) -> Option<f32> { self.vtg().map(|v| v.course_true) }
+    fn course_deg(&self) -> Option<f32> {
+        self.vtg().map(|v| v.course_true)
+    }
 
     /// Returns the most recent UTC time, checking GGA → RMC → ZDA in priority order.
     fn utc_time(&self) -> Option<NmeaTime> {
-        self.gga().map(|g| g.time)
+        self.gga()
+            .map(|g| g.time)
             .or_else(|| self.rmc().map(|r| r.time))
             .or_else(|| self.zda().map(|z| z.time))
     }
 
     /// Returns the most recent UTC date, checking RMC → ZDA in priority order.
     fn utc_date(&self) -> Option<NmeaDate> {
-        self.rmc().map(|r| r.date)
+        self.rmc()
+            .map(|r| r.date)
             .or_else(|| self.zda().map(|z| z.date))
     }
 
@@ -84,26 +91,50 @@ pub trait GnssStore {
 /// Use [`ParsedSentence::kind()`] to obtain one, or match directly on [`ParsedSentence`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum SentenceType {
-    Gga, Rmc, Gsa, Gsv, Vtg, Zda, Gst, Dhv, Txt,
+    Gga,
+    Rmc,
+    Gsa,
+    Gsv,
+    Vtg,
+    Zda,
+    Gst,
+    Dhv,
+    Txt,
 }
 
 #[cfg(feature = "defmt")]
 impl defmt::Format for SentenceType {
     fn format(&self, f: defmt::Formatter) {
-        defmt::write!(f, "{}", match self {
-            Self::Gga => "GGA", Self::Rmc => "RMC", Self::Gsa => "GSA",
-            Self::Gsv => "GSV", Self::Vtg => "VTG", Self::Zda => "ZDA",
-            Self::Gst => "GST", Self::Dhv => "DHV", Self::Txt => "TXT",
-        })
+        defmt::write!(
+            f,
+            "{}",
+            match self {
+                Self::Gga => "GGA",
+                Self::Rmc => "RMC",
+                Self::Gsa => "GSA",
+                Self::Gsv => "GSV",
+                Self::Vtg => "VTG",
+                Self::Zda => "ZDA",
+                Self::Gst => "GST",
+                Self::Dhv => "DHV",
+                Self::Txt => "TXT",
+            }
+        )
     }
 }
 
 impl core::fmt::Display for SentenceType {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match self {
-            Self::Gga => "GGA", Self::Rmc => "RMC", Self::Gsa => "GSA",
-            Self::Gsv => "GSV", Self::Vtg => "VTG", Self::Zda => "ZDA",
-            Self::Gst => "GST", Self::Dhv => "DHV", Self::Txt => "TXT",
+            Self::Gga => "GGA",
+            Self::Rmc => "RMC",
+            Self::Gsa => "GSA",
+            Self::Gsv => "GSV",
+            Self::Vtg => "VTG",
+            Self::Zda => "ZDA",
+            Self::Gst => "GST",
+            Self::Dhv => "DHV",
+            Self::Txt => "TXT",
         })
     }
 }
@@ -179,7 +210,9 @@ where
     let mut buf = [0u8; 128];
     loop {
         match reader.next_line(&mut buf).await {
-            Ok(n) if n > 0 => { feed_sentence(state, &buf[..n]); }
+            Ok(n) if n > 0 => {
+                feed_sentence(state, &buf[..n]);
+            }
             _ => {}
         }
     }

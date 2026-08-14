@@ -7,12 +7,12 @@ pub mod prelude;
 pub mod state;
 pub mod types;
 
-pub use command::{BaudRate, UpdateRate, RestartMode, InfoField, ConstellationMask, CommandSink};
+pub use command::{BaudRate, CommandSink, ConstellationMask, InfoField, RestartMode, UpdateRate};
 pub use nmea::{
-    parse_sentence, ParsedSentence, ParseError,
-    GgaData, RmcData, GsaData, GsvData, VtgData, ZdaData, DhvData, GstData, TxtData,
+    DhvData, GgaData, GsaData, GstData, GsvData, ParseError, ParsedSentence, RmcData, TxtData,
+    VtgData, ZdaData, parse_sentence,
 };
-pub use state::{feed_sentence, GnssStore, SentenceType};
 #[cfg(feature = "async")]
 pub use state::{AsyncLineReader, run_with_reader};
+pub use state::{GnssStore, SentenceType, feed_sentence};
 pub use types::*;

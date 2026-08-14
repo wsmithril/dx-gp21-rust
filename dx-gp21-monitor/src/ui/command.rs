@@ -136,7 +136,7 @@ fn render_popup<S: GnssSession>(frame: &mut Frame, input_area: Rect, app: &App<S
     // Scroll to keep selected item visible
     let selected_row = app.completion_idx.and_then(|sel_idx| {
         rows.iter().enumerate().find_map(|(r, row)| {
-            if let CompletionRow::Variant { idx } = row { if *idx == sel_idx { return Some(r); } }
+            if let CompletionRow::Variant { idx } = row && *idx == sel_idx { return Some(r); }
             None
         })
     }).unwrap_or(0);

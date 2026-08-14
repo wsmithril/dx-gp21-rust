@@ -10,26 +10,27 @@ use dx_gp21_core::command::{
 use crate::host_state::GnssState;
 use crate::serial::SessionError;
 
-/// Common interface for both [`crate::serial::SerialSession`] (live port) and
-/// [`crate::file_session::FileSession`] (read-only replay).
+/// Core session interface shared by live serial ports and file replay.
 ///
-/// **Required methods:** `state`, `drain_log`, `send_raw`.
-/// All `$PCAS` command helpers (`save_config`, `restart`, `set_baud`, …) are
-/// provided as defaults — each builds the correct byte sequence and calls
-/// `send_raw`. A read-only session only needs a no-op `send_raw` to make every
-/// command silently do nothing.
+/// Required: `state`, `drain_sentences`, `send_raw`.
+/// All `$PCAS` command helpers are provided as defaults via `send_raw`.
+/// Read-only sessions use a no-op `send_raw`; file replay sessions that
+/// support time control additionally implement [`SeekableSession`].
 pub trait GnssSession {
     fn state(&self) -> MutexGuard<'_, GnssState>;
-    /// Drain buffered [`SentenceLine`] items (non-blocking). Each item carries
-    /// the raw NMEA string and the parse result so callers can log, filter, or
-    /// react at the sentence level without re-parsing.
     fn drain_sentences(&self, out: &mut Vec<SentenceLine>);
     fn send_raw(&self, bytes: &[u8]) -> Result<(), SessionError>;
 
-    /// Returns `true` for read-only sessions (e.g. file playback).
+    /// `true` for read-only sessions (e.g. file playback).
     fn is_readonly(&self) -> bool { false }
 
-    // ── Command helpers — all default to: build bytes, then send_raw ──────────
+    /// `true` if this session also implements [`SeekableSession`].
+    fn seekable(&self) -> bool { false }
+
+    /// Returns a reference to this session as a [`SeekableSession`], or `None`.
+    fn as_seekable(&self) -> Option<&dyn SeekableSession> { None }
+
+    // ── $PCAS command helpers (build bytes → send_raw) ────────────────────────
 
     fn save_config(&self) -> Result<(), SessionError> {
         let mut buf = [0u8; 32]; let n = cmd_save_config(&mut buf); self.send_raw(&buf[..n])
@@ -52,4 +53,28 @@ pub trait GnssSession {
     fn set_nmea_version(&self, v41_plus: bool) -> Result<(), SessionError> {
         let mut buf = [0u8; 32]; let n = cmd_set_nmea_version(&mut buf, v41_plus); self.send_raw(&buf[..n])
     }
+}
+
+/// Time-control extensions for file replay sessions.
+///
+/// Implemented by [`crate::file_session::FileSession`]; never by serial sessions.
+/// Access via [`GnssSession::as_seekable()`].
+pub trait SeekableSession: GnssSession {
+    /// Adjust the per-line replay delay (microseconds).
+    /// Lower values play faster; 0 means no delay.
+    fn set_replay_delay_ms(&self, ms: u64);
+
+    /// Returns the current per-line delay in milliseconds.
+    fn get_replay_delay_ms(&self) -> u64;
+
+    /// Seek ±N × ~5 s (coarse navigation: ←/→ keys).
+    fn seek(&self, steps: i64);
+
+    /// Step ±N × ~1 s and let the caller pause for inspection (</> keys).
+    fn step(&self, cycles: i64);
+
+    /// Pause or resume playback. When paused the background thread stops
+    /// advancing but still processes seek deltas, so </> step-and-pause
+    /// jumps to the new position and updates state before freezing.
+    fn set_paused(&self, paused: bool);
 }

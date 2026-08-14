@@ -6,11 +6,11 @@ description = "no_std/no_alloc embedded driver for DX-GP21 GNSS module"
 license = "MIT"
 
 [dependencies]
-dx-gp21-core = { path = "../dx-gp21-core" }
-heapless      = "0.8"
+dx-gp21-core = { workspace = true }
+heapless      = "0.9"
 
 [dependencies.embedded-io-async]
-version  = "0.6"
+version  = "0.7"
 optional = true
 
 [features]

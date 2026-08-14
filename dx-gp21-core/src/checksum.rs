@@ -12,10 +12,18 @@ pub fn verify(line: &[u8]) -> Option<&[u8]> {
     let body = &line[1..star_pos];
     let cs_slice = &line[star_pos + 1..];
     // trim \r\n
-    let cs_str = core::str::from_utf8(cs_slice).ok()?.trim_end_matches(['\r', '\n']);
-    if cs_str.len() < 2 { return None; }
+    let cs_str = core::str::from_utf8(cs_slice)
+        .ok()?
+        .trim_end_matches(['\r', '\n']);
+    if cs_str.len() < 2 {
+        return None;
+    }
     let expected = u8::from_str_radix(&cs_str[..2], 16).ok()?;
-    if compute(body) == expected { Some(body) } else { None }
+    if compute(body) == expected {
+        Some(body)
+    } else {
+        None
+    }
 }
 
 pub(crate) fn nibble_to_hex(n: u8) -> u8 {

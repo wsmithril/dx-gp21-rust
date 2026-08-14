@@ -6,6 +6,6 @@ description = "std host driver for DX-GP21 GNSS module (serialport + GnssState)"
 license = "MIT"
 
 [dependencies]
-dx-gp21-core = { path = "../dx-gp21-core" }
+dx-gp21-core = { workspace = true }
 serialport = "4"
 thiserror = "2"

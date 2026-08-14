@@ -12,13 +12,19 @@ pub struct GsaData {
 
 impl From<GsaData> for DopValues {
     fn from(g: GsaData) -> Self {
-        Self { pdop: g.pdop, hdop: g.hdop, vdop: g.vdop }
+        Self {
+            pdop: g.pdop,
+            hdop: g.hdop,
+            vdop: g.vdop,
+        }
     }
 }
 
 // Fields: smode, FS, sv1..sv12, PDOP, HDOP, VDOP[, systemId]
 pub(crate) fn parse(system: GnssSystem, f: &[&str]) -> Option<GsaData> {
-    if f.len() < 15 { return None; }
+    if f.len() < 15 {
+        return None;
+    }
     let fix_mode = match f[1] {
         "2" => FixMode::Fix2D,
         "3" => FixMode::Fix3D,
@@ -26,17 +32,38 @@ pub(crate) fn parse(system: GnssSystem, f: &[&str]) -> Option<GsaData> {
     };
     let mut svids = [None::<u16>; 12];
     for i in 0..12 {
-        if !f[2 + i].is_empty() { svids[i] = f[2 + i].parse().ok(); }
+        if !f[2 + i].is_empty() {
+            svids[i] = f[2 + i].parse().ok();
+        }
     }
     let pdop: f32 = f[14].parse().unwrap_or(99.9);
-    let hdop: f32 = if f.len() > 15 { f[15].parse().unwrap_or(99.9) } else { 99.9 };
-    let vdop: f32 = if f.len() > 16 { f[16].parse().unwrap_or(99.9) } else { 99.9 };
+    let hdop: f32 = if f.len() > 15 {
+        f[15].parse().unwrap_or(99.9)
+    } else {
+        99.9
+    };
+    let vdop: f32 = if f.len() > 16 {
+        f[16].parse().unwrap_or(99.9)
+    } else {
+        99.9
+    };
     let resolved_system = if f.len() > 17 {
         match f[17] {
-            "1" => GnssSystem::Gps, "2" => GnssSystem::Glonass,
-            "4" => GnssSystem::Beidou, "8" => GnssSystem::Galileo,
+            "1" => GnssSystem::Gps,
+            "2" => GnssSystem::Glonass,
+            "4" => GnssSystem::Beidou,
+            "8" => GnssSystem::Galileo,
             _ => system,
         }
-    } else { system };
-    Some(GsaData { system: resolved_system, fix_mode, pdop, hdop, vdop, svids })
+    } else {
+        system
+    };
+    Some(GsaData {
+        system: resolved_system,
+        fix_mode,
+        pdop,
+        hdop,
+        vdop,
+        svids,
+    })
 }

@@ -1,26 +1,26 @@
+mod dhv;
 mod gga;
 mod gsa;
+mod gst;
 mod gsv;
 mod rmc;
+mod txt;
 mod vtg;
 mod zda;
-mod dhv;
-mod gst;
-mod txt;
 
 // Re-export each NMEA sentence type from its own file.
+pub use dhv::DhvData;
 pub use gga::GgaData;
 pub use gsa::GsaData;
+pub use gst::GstData;
 pub use gsv::GsvData;
 pub use rmc::RmcData;
+pub use txt::TxtData;
 pub use vtg::VtgData;
 pub use zda::ZdaData;
-pub use dhv::DhvData;
-pub use gst::GstData;
-pub use txt::TxtData;
 
-use crate::types::*;
 use crate::checksum;
+use crate::types::*;
 
 // ── ParseError ────────────────────────────────────────────────────────────────
 
@@ -75,25 +75,79 @@ impl ParsedSentence {
     pub fn kind(self) -> crate::state::SentenceType {
         use crate::state::SentenceType;
         match self {
-            Self::Gga(_) => SentenceType::Gga, Self::Rmc(_) => SentenceType::Rmc,
-            Self::Gsa(_) => SentenceType::Gsa, Self::Gsv(_) => SentenceType::Gsv,
-            Self::Vtg(_) => SentenceType::Vtg, Self::Zda(_) => SentenceType::Zda,
-            Self::Gst(_) => SentenceType::Gst, Self::Dhv(_) => SentenceType::Dhv,
+            Self::Gga(_) => SentenceType::Gga,
+            Self::Rmc(_) => SentenceType::Rmc,
+            Self::Gsa(_) => SentenceType::Gsa,
+            Self::Gsv(_) => SentenceType::Gsv,
+            Self::Vtg(_) => SentenceType::Vtg,
+            Self::Zda(_) => SentenceType::Zda,
+            Self::Gst(_) => SentenceType::Gst,
+            Self::Dhv(_) => SentenceType::Dhv,
             Self::Txt(_) => SentenceType::Txt,
         }
     }
 
     /// Returns `true` for sentences that carry a position fix (GGA, RMC).
-    pub fn has_position(&self) -> bool { matches!(self, Self::Gga(_) | Self::Rmc(_)) }
+    pub fn has_position(&self) -> bool {
+        matches!(self, Self::Gga(_) | Self::Rmc(_))
+    }
 
-    pub fn as_gga(&self) -> Option<&GgaData> { if let Self::Gga(d) = self { Some(d) } else { None } }
-    pub fn as_rmc(&self) -> Option<&RmcData> { if let Self::Rmc(d) = self { Some(d) } else { None } }
-    pub fn as_gsa(&self) -> Option<&GsaData> { if let Self::Gsa(d) = self { Some(d) } else { None } }
-    pub fn as_gsv(&self) -> Option<&GsvData> { if let Self::Gsv(d) = self { Some(d) } else { None } }
-    pub fn as_vtg(&self) -> Option<&VtgData> { if let Self::Vtg(d) = self { Some(d) } else { None } }
-    pub fn as_zda(&self) -> Option<&ZdaData> { if let Self::Zda(d) = self { Some(d) } else { None } }
-    pub fn as_gst(&self) -> Option<&GstData> { if let Self::Gst(d) = self { Some(d) } else { None } }
-    pub fn as_dhv(&self) -> Option<&DhvData> { if let Self::Dhv(d) = self { Some(d) } else { None } }
+    pub fn as_gga(&self) -> Option<&GgaData> {
+        if let Self::Gga(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_rmc(&self) -> Option<&RmcData> {
+        if let Self::Rmc(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_gsa(&self) -> Option<&GsaData> {
+        if let Self::Gsa(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_gsv(&self) -> Option<&GsvData> {
+        if let Self::Gsv(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_vtg(&self) -> Option<&VtgData> {
+        if let Self::Vtg(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_zda(&self) -> Option<&ZdaData> {
+        if let Self::Zda(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_gst(&self) -> Option<&GstData> {
+        if let Self::Gst(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
+    pub fn as_dhv(&self) -> Option<&DhvData> {
+        if let Self::Dhv(d) = self {
+            Some(d)
+        } else {
+            None
+        }
+    }
 }
 
 // TryFrom<&[u8]> — primary entry point (raw UART bytes, log file lines).
@@ -117,7 +171,9 @@ impl<'a> core::convert::TryFrom<&'a str> for ParsedSentence {
 fn split_fields<'a>(body: &'a str, out: &mut [&'a str]) -> usize {
     let mut n = 0;
     for f in body.split(',') {
-        if n >= out.len() { break; }
+        if n >= out.len() {
+            break;
+        }
         out[n] = f;
         n += 1;
     }
@@ -130,9 +186,13 @@ pub fn parse_sentence(line: &[u8]) -> Option<ParsedSentence> {
     let body_str = core::str::from_utf8(body).ok()?;
     let mut fields = [""; 24];
     let nf = split_fields(body_str, &mut fields);
-    if nf < 1 { return None; }
+    if nf < 1 {
+        return None;
+    }
     let sentence_id = fields[0];
-    if sentence_id.len() < 3 { return None; }
+    if sentence_id.len() < 3 {
+        return None;
+    }
     let (talker, stype) = if sentence_id.starts_with('P') {
         ("", sentence_id)
     } else if sentence_id.len() >= 5 {

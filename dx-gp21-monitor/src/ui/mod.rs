@@ -72,15 +72,17 @@ fn render_hint_bar<S: GnssSession>(frame: &mut Frame, area: ratatui::layout::Rec
         };
     }
 
-    let spans: Vec<Span> = if app.session.is_readonly() {
+    let spans: Vec<Span> = if app.session.seekable() {
         let mut v = vec![
             Span::styled(" File playback mode", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
             Span::styled("  │  ", sep),
         ];
         v.extend(hint!("Ctrl+C", "quit"));
+        v.extend(hint!("Space", "pause"));
+        v.extend(hint!("←/→", "seek ±5s"));
+        v.extend(hint!("</>", "step ±1s+pause"));
+        v.extend(hint!("-/+", "speed"));
         v.extend(hint!("F1", "help"));
-        v.extend(hint!("F2/F5", "pause log"));
-        v.extend(hint!("F6", "clear log"));
         v.extend(hint!("PgUp/PgDn", "scroll sats"));
         v
     } else {
@@ -92,7 +94,6 @@ fn render_hint_bar<S: GnssSession>(frame: &mut Frame, area: ratatui::layout::Rec
         v.extend(hint!("F1", "help"));
         v.extend(hint!("F3", "save config"));
         v.extend(hint!("F4", "restart"));
-        v.extend(hint!("F2/F5", "pause log"));
         v.extend(hint!("PgUp/PgDn", "scroll sats"));
         v
     };
@@ -124,7 +125,6 @@ fn render_help(frame: &mut Frame, area: ratatui::layout::Rect) {
         " Esc          Clear input / dismiss overlay\n",
         " PgUp / PgDn  Scroll satellite table\n\n",
         " F1           Toggle this help overlay\n",
-        " F2 / F5      Pause / resume NMEA log\n",
         " F3           Save config to flash ($PCAS00)\n",
         " F4           Cold restart (with confirmation)\n",
         " F6           Clear NMEA log\n\n",

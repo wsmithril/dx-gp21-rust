@@ -10,7 +10,7 @@ license = "MIT"
 [dev-dependencies]
 
 [dependencies.defmt]
-version  = "0.3"
+workspace = true
 optional = true
 
 [features]
